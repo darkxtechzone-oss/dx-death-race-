@@ -1,0 +1,83 @@
+name: Build DarkX Death Race
+
+on:
+  workflow_dispatch:        # run manually: Actions tab -> Run workflow
+  push:
+    tags: ["v*"]            # tag v1.0.0 -> build + GitHub Release
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "3.5.3"
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    name: Export (Windows + Linux)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    container:
+      image: barichello/godot-ci:3.5.3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          for f in project.godot export_presets.cfg src/Main.gd branding/dx_logo.png; do
+            [ -f "$f" ] || { echo "::error::Missing $f"; exit 1; }
+          done
+          [ -d assets ] || { echo "::error::Folder 'assets/' is missing. Copy the game assets (models, textures, materials, fonts) into assets/ before building. See ASSETS_REQUIRED.md"; exit 1; }
+
+      - name: Install export templates
+        run: |
+          mkdir -p ~/.local/share/godot/templates
+          mv /root/.local/share/godot/templates/${GODOT_VERSION}.stable ~/.local/share/godot/templates/${GODOT_VERSION}.stable
+
+      - name: Import resources
+        run: godot --editor --quit --headless || true
+
+      - name: Export Windows
+        run: |
+          mkdir -p build/windows
+          godot --headless --export "Windows Desktop" build/windows/DarkX-Death-Race.exe
+          test -f build/windows/DarkX-Death-Race.exe
+
+      - name: Export Linux
+        run: |
+          mkdir -p build/linux
+          godot --headless --export "Linux/X11" build/linux/DarkX-Death-Race.x86_64
+          test -f build/linux/DarkX-Death-Race.x86_64
+
+      - name: Package
+        run: |
+          cd build
+          cp ../LICENCE windows/LICENCE.txt
+          cp ../LICENCE linux/LICENCE.txt
+          chmod +x linux/DarkX-Death-Race.x86_64
+          zip -r -9 DarkX-Death-Race-Windows.zip windows
+          tar -czf DarkX-Death-Race-Linux.tar.gz linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DarkX-Death-Race-Windows
+          path: build/DarkX-Death-Race-Windows.zip
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DarkX-Death-Race-Linux
+          path: build/DarkX-Death-Race-Linux.tar.gz
+          retention-days: 14
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/DarkX-Death-Race-Windows.zip
+            build/DarkX-Death-Race-Linux.tar.gz

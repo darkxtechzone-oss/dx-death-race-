@@ -1,0 +1,10 @@
+[gd_resource type="SpatialMaterial" format=2]
+
+[resource]
+params_cull_mode = 2
+albedo_color = Color( 0.3500, 0.3300, 0.2500, 1.0000 )
+metallic = 0.00
+roughness = 0.80
+emission_enabled = false
+emission = Color( 0.3500, 0.3300, 0.2500, 1.0000 )
+emission_energy = 1.0
