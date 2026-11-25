@@ -44,6 +44,30 @@ jobs:
           unzip -q Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mv templates ~/.local/share/godot/templates/${GODOT_VERSION}.stable
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+
+      - name: Setup Android SDK + debug keystore
+        run: |
+          export ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;30.0.3" "platforms;android-29" > /dev/null
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore $HOME/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-3.tres <<EOF
+          [gd_resource type="EditorSettings" format=2]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
+          export/android/debug_keystore = "$HOME/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          export/android/force_system_user = false
+          export/android/shutdown_adb_on_exit = true
+          EOF
+
       - name: Import resources
         run: godot --editor --quit || true
 
@@ -59,6 +83,12 @@ jobs:
           godot --export "Linux/X11" build/linux/DarkX-Death-Race.x86_64
           test -f build/linux/DarkX-Death-Race.x86_64
 
+      - name: Export Android APK
+        run: |
+          mkdir -p build/android
+          godot --export-debug "Android" build/android/DarkX-Death-Race.apk
+          test -f build/android/DarkX-Death-Race.apk
+
       - name: Package
         run: |
           cd build
@@ -67,6 +97,12 @@ jobs:
           chmod +x linux/DarkX-Death-Race.x86_64
           zip -r -9 DarkX-Death-Race-Windows.zip windows
           tar -czf DarkX-Death-Race-Linux.tar.gz linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DarkX-Death-Race-Android
+          path: build/android/DarkX-Death-Race.apk
+          retention-days: 14
 
       - uses: actions/upload-artifact@v4
         with:
@@ -85,5 +121,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            build/android/DarkX-Death-Race.apk
             build/DarkX-Death-Race-Windows.zip
             build/DarkX-Death-Race-Linux.tar.gz
