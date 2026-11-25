@@ -1,9 +1,10 @@
 name: Build DarkX Death Race
 
 on:
-  workflow_dispatch:        # run manually: Actions tab -> Run workflow
+  workflow_dispatch:
   push:
-    tags: ["v*"]            # tag v1.0.0 -> build + GitHub Release
+    branches: ["main"]
+    tags: ["v*"]
 
 concurrency:
   group: build-${{ github.ref }}
