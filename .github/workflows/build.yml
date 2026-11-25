@@ -43,7 +43,6 @@ jobs:
           mkdir -p ~/.local/share/godot/templates
           unzip -q Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mv templates ~/.local/share/godot/templates/${GODOT_VERSION}.stable
-          godot --version
 
       - name: Import resources
         run: godot --editor --quit || true
