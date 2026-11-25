@@ -42,6 +42,7 @@ func _ready() -> void:
 
 func refresh_weather() -> void:
 	var env:Environment
+	$WorldLight.shadow_enabled = !OS.has_touchscreen_ui_hint() # DX_MOBILE
 	#$WorldLight.rotation_degrees = Vector3(-128.551, -36.925, 0.0)
 	match (weather):
 		Weather.AFTERNOON_GOLD:

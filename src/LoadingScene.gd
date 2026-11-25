@@ -18,7 +18,14 @@ func _ready() -> void:
 	#if !Main.file_exists(Main.get_save_slot_path(0)): # Preloading track means the RacePick will disappear so fast that the player won't see bot names when skipping after player-signup
 	#	add_bonus_load(Race.get_track_path(1), true)
 	#	load_count += 1
-	get_tree().get_root().call_deferred("add_child", VIEWPORTS_TT.instance())
+	var vtt:Node = VIEWPORTS_TT.instance()
+	if OS.has_touchscreen_ui_hint(): # DX_MOBILE: tyre-track viewports 2500px -> 512px
+		for v in vtt.get_children():
+			if v is Viewport:
+				v.size = Vector2(512, 512)
+				v.set_size_override(true, Vector2(2500, 2500))
+				v.set_size_override_stretch(true)
+	get_tree().get_root().call_deferred("add_child", vtt)
 
 func _input(event:InputEvent) -> void:
 	if event.is_action_pressed("toggle_fullscreen"):

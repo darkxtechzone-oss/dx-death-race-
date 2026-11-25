@@ -170,6 +170,8 @@ func _notification(what:int) -> void:
 # GFX SETTINGS (TOGGLES)
 
 func load_gfx_settings() -> void:
+	if OS.has_touchscreen_ui_hint(): # DX_MOBILE: light defaults for phones
+		gfx_settings = [GFXOverall.VERY_LOW, Viewport.MSAA_DISABLED, false, 0, false, 0, 3]
 	var err:int = gfx_config.load("user://deathrace_gfx.cfg")
 	if err == OK:
 		var keys:Array = GFXOption.OptionType.keys()
@@ -283,10 +285,12 @@ func get_next_shadow_filter(settings:Array, step:int=1) -> Array:
 
 func apply_shadow_filter() -> void:
 	var mem:int = 4096
+	if OS.has_touchscreen_ui_hint():
+		mem = 1024
 	var filter:int = 0
 	match gfx_settings[GFXOption.OptionType.SHADOW_FILTER]:
 		0:
-			mem = 2048
+			mem = 2048 if !OS.has_touchscreen_ui_hint() else 1024
 		2:
 			filter = 1
 		3:
