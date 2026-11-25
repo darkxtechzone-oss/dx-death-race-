@@ -193,7 +193,8 @@ func _input(event:InputEvent) -> void:
 		var arrows_on_hue:bool = ((screen_focus == MenuScreenType.GARAGE && garage_ui.visible && garage_ui.get_node("CarShop").focus == 1) || (screen_focus == MenuScreenType.MAIN && mm_creation.visible && mm_creation.focus == 2)) && (event.is_action("ui_left") || event.is_action("ui_right")) # bit ugly fix (giving hue-arrows exception from "released event only")
 		if event.is_pressed():
 			if event is InputEventMouseButton: # mouse
-				new_info_sign("Keyboard Only")
+				if !OS.has_touchscreen_ui_hint():
+					new_info_sign("Keyboard Only")
 			elif arrows_on_hue:
 				if screen_focus == MenuScreenType.GARAGE:
 					garage_ui.get_node("CarShop").menu_input(event)
