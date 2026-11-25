@@ -20,8 +20,6 @@ jobs:
     name: Export (Windows + Linux)
     runs-on: ubuntu-22.04
     timeout-minutes: 30
-    container:
-      image: barichello/godot-ci:3.5.3
 
     steps:
       - uses: actions/checkout@v4
@@ -33,24 +31,32 @@ jobs:
           done
           [ -d assets ] || { echo "::error::Folder 'assets/' is missing. Copy the game assets (models, textures, materials, fonts) into assets/ before building. See ASSETS_REQUIRED.md"; exit 1; }
 
-      - name: Install export templates
+      - name: Install Godot + export templates
         run: |
+          BASE=https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable
+          wget -q $BASE/Godot_v${GODOT_VERSION}-stable_linux_headless.64.zip
+          wget -q $BASE/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux_headless.64.zip
+          sudo mv Godot_v${GODOT_VERSION}-stable_linux_headless.64 /usr/local/bin/godot
+          sudo chmod +x /usr/local/bin/godot
           mkdir -p ~/.local/share/godot/templates
-          mv /root/.local/share/godot/templates/${GODOT_VERSION}.stable ~/.local/share/godot/templates/${GODOT_VERSION}.stable
+          unzip -q Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          mv templates ~/.local/share/godot/templates/${GODOT_VERSION}.stable
+          godot --version
 
       - name: Import resources
-        run: godot --editor --quit --headless || true
+        run: godot --editor --quit || true
 
       - name: Export Windows
         run: |
           mkdir -p build/windows
-          godot --headless --export "Windows Desktop" build/windows/DarkX-Death-Race.exe
+          godot --export "Windows Desktop" build/windows/DarkX-Death-Race.exe
           test -f build/windows/DarkX-Death-Race.exe
 
       - name: Export Linux
         run: |
           mkdir -p build/linux
-          godot --headless --export "Linux/X11" build/linux/DarkX-Death-Race.x86_64
+          godot --export "Linux/X11" build/linux/DarkX-Death-Race.x86_64
           test -f build/linux/DarkX-Death-Race.x86_64
 
       - name: Package
